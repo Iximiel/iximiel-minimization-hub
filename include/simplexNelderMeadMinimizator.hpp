@@ -2,11 +2,11 @@
 #define SIMPLEXMINIMIZATOR_H
 #include <algorithm>
 #include <array>
-#include <iostream>
 #include <functional>
+#include <iostream>
 
 namespace simplexNelderMeadMethodMinimization {
-constexpr unsigned maxFunctionEvaluations = 5000;
+constexpr unsigned maxFunctionEvaluations = 50000;
 
 template <typename T, unsigned N>
 struct simplex {
@@ -22,7 +22,7 @@ struct simplex {
     vertex(vertex &&other)
         : value_(std::move(other.value_)), coordinates_(other.coordinates_) {}
 
-    void evaluation(std::function<T (T *)> function) {
+    void evaluation(std::function<T(T *)> function) {
       value_ = function(coordinates_.data());
     }
 
@@ -48,7 +48,7 @@ struct simplex {
     bool operator>(const vertex &other) { return value_ > other.value_; }
     bool operator<(const vertex &other) { return value_ < other.value_; }
 
-    //accessing
+    // accessing
     T operator[](const unsigned &i) const { return coordinates_[i]; }
     T &operator[](const unsigned &i) { return coordinates_[i]; }
 
@@ -61,22 +61,22 @@ struct simplex {
 
   simplex() = default;
 
-  simplex(const simplex& s):vertices_(s.vertices_){}
+  simplex(const simplex &s) : vertices_(s.vertices_) {}
 
-  simplex(const simplex&& s):vertices_(s.vertices_){}
+  simplex(const simplex &&s) : vertices_(s.vertices_) {}
 
-  simplex& operator=(const simplex& s){
-      if(this!=&s) {
-          vertices_=s.vertices_;
-      }
-      return *this;
+  simplex &operator=(const simplex &s) {
+    if (this != &s) {
+      vertices_ = s.vertices_;
+    }
+    return *this;
   }
 
-  simplex& operator=(const simplex&& s){
-      if(this!=&s) {
-          vertices_.swap(s.vertices_);
-      }
-      return *this;
+  simplex &operator=(const simplex &&s) {
+    if (this != &s) {
+      vertices_.swap(s.vertices_);
+    }
+    return *this;
   }
 
   simplex(T intitialDisplacement, const vertex &startingvertex) {
@@ -90,19 +90,18 @@ struct simplex {
   inline void updateCentroid() {
     for (unsigned i = 0; i < N; ++i) {
       centroid_[i] = vertices_[0][i];
-      // Numerical Recipes uses also the last point in the centroid, wikipedia
-      // not
+      // Numerical Recipes uses also the last point in the centroid
       for (unsigned j = 1; j < N /*+1*/; ++j) {
         centroid_[i] += vertices_[j][i];
       }
+      centroid_[i] /=N;
     }
   }
 
-  void orderVertices() {
-    std::sort(vertices_.begin(), vertices_.end());
-  }
+  void orderVertices() { std::sort(vertices_.begin(), vertices_.end()); }
 
-  vertex extrapolateOnTheWorst(const T &factor, std::function<T (T *)> function) const {
+  vertex extrapolateOnTheWorst(const T &factor,
+                               std::function<T(T *)> function) const {
     vertex newTry;
     T f1 = (1 - factor) / N;
     T f2 = f1 - factor;
@@ -113,19 +112,18 @@ struct simplex {
     return newTry;
   }
 
-  //accessing
+  // accessing
   vertex operator[](const unsigned &i) const { return vertices_[i]; }
   vertex &operator[](const unsigned &i) { return vertices_[i]; }
 
-  protected:
+protected:
   std::array<vertex, N + 1> vertices_;
   std::array<T, N> centroid_;
 };
 
 template <typename T, unsigned dim>
 typename simplex<T, dim>::vertex
-minimizerNelderMead(simplex<T, dim> s,
-                 std::function<T (T *)> function) {
+minimizerNelderMead(simplex<T, dim> s, std::function<T(T *)> function) {
   constexpr T notDen0 = 1e-10;
 
   using Vertex = typename simplex<T, dim>::vertex;
@@ -137,10 +135,8 @@ minimizerNelderMead(simplex<T, dim> s,
     // order
     s.orderVertices();
     s.updateCentroid();
-    rtol = 2.0 *
-           std::abs(s[dim].getValue() - s[0].getValue()) /
-           (std::abs(s[dim].getValue()) +
-            std::abs(s[0].getValue()) + notDen0);
+    rtol = 2.0 * std::abs(s[dim].getValue() - s[0].getValue()) /
+           (std::abs(s[dim].getValue()) + std::abs(s[0].getValue()) + notDen0);
     if (rtol < ftol) {
       break;
     }
@@ -179,17 +175,16 @@ minimizerNelderMead(simplex<T, dim> s,
 }
 
 template <typename T, unsigned dim>
-typename simplex<T, dim>::vertex
-minimizerNelderMeadFromStartingVertex(T intitialDisplacement,
-                 typename simplex<T, dim>::vertex startingvertex,
-                 std::function<T (T *)> function) {
-    using Simplex = simplex<T, dim>;
+typename simplex<T, dim>::vertex minimizerNelderMeadFromStartingVertex(
+    T intitialDisplacement, typename simplex<T, dim>::vertex startingvertex,
+    std::function<T(T *)> function) {
+  using Simplex = simplex<T, dim>;
 
-    Simplex s(intitialDisplacement, startingvertex);
-    for (unsigned i = 0; i < dim + 1; ++i) {
-        s[i].evaluation(function);
-    }
-    return minimizerNelderMead(s,function);
+  Simplex s(intitialDisplacement, startingvertex);
+  for (unsigned i = 0; i < dim + 1; ++i) {
+    s[i].evaluation(function);
+  }
+  return minimizerNelderMead(s, function);
 }
-} // namespace simplexMethodMinimization
+} // namespace simplexNelderMeadMethodMinimization
 #endif // SIMPLEXMINIMIZATOR_H

@@ -1,0 +1,1 @@
+In this repository I'm making a repository of minimization algorithm, trying to use only the c++ std library, I know it is not wise.
