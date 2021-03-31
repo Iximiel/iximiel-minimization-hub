@@ -8,17 +8,19 @@ void exampleSolverFromStarting (std::string title, std::function<T(T *)> functio
     typename simplexNelderMeadMethodMinimization::simplex<T, N>::vertex
         startingvertex;
     for (int i = 0; i < N; ++i) {
-        startingvertex[i] = 1.1;
+        startingvertex[i] = -1.1;
     }
     auto t = simplexNelderMeadMethodMinimization::
         minimizerNelderMeadFromStartingVertex<double, N>(2.5, startingvertex,
                                                          function);
     std::cout << title << " minimum found: "
-    << t.getValue() << std::endl
+    << t.bestVertex.getValue()
+              << " in " << t.functionEvaluations << " evaluations"
+              << std::endl
               << " at\n";
 
     for (int i = 0; i < N; ++i) {
-        std::cout << i << ": " << t[i] << std::endl;
+        std::cout << i << ": " << t.bestVertex[i] << std::endl;
     }
 }
 

@@ -6,10 +6,9 @@
 #include <iostream>
 
 namespace simplexNelderMeadMethodMinimization {
-constexpr unsigned maxFunctionEvaluations = 50000;
+constexpr unsigned maxFunctionEvaluations = 5000;
 
-template <typename T, unsigned N>
-struct simplex {
+template <typename T, unsigned N> struct simplex {
   struct vertex {
     vertex() = default;
 
@@ -94,17 +93,17 @@ struct simplex {
       for (unsigned j = 1; j < N /*+1*/; ++j) {
         centroid_[i] += vertices_[j][i];
       }
-      centroid_[i] /=N;
+      centroid_[i] /= N;
     }
   }
 
   void orderVertices() { std::sort(vertices_.begin(), vertices_.end()); }
 
   vertex newVertexFromWorstAndCentroid(const T &factor,
-                               std::function<T(T *)> function) const {
+                                       std::function<T(T *)> function) const {
     vertex newTry;
-    for (unsigned i = 0; i < N + 1; ++i) {
-        newTry[i] = (centroid_[i] - vertices_[N][i]) * factor + centroid_[i];
+    for (unsigned i = 0; i < N; ++i) {
+      newTry[i] = (centroid_[i] - vertices_[N][i]) * factor + centroid_[i];
     }
     newTry.evaluation(function);
     return newTry;
@@ -120,7 +119,13 @@ protected:
 };
 
 template <typename T, unsigned dim>
-typename simplex<T, dim>::vertex
+struct NelderMeadReturnType {
+  typename simplex<T, dim>::vertex bestVertex;
+  unsigned functionEvaluations;
+};
+
+template <typename T, unsigned dim>
+NelderMeadReturnType<T, dim>
 minimizerNelderMead(simplex<T, dim> s, std::function<T(T *)> function) {
   constexpr T notDen0 = 1e-10;
 
@@ -167,13 +172,13 @@ minimizerNelderMead(simplex<T, dim> s, std::function<T(T *)> function) {
       }
     }
   }
-  std::cout << functionEvaluations << " / " << maxFunctionEvaluations
-            << std::endl;
-  return s[0];
+  // std::cout << functionEvaluations << " / " << maxFunctionEvaluations <<
+  // std::endl;
+  return {s[0],functionEvaluations};
 }
 
 template <typename T, unsigned dim>
-typename simplex<T, dim>::vertex minimizerNelderMeadFromStartingVertex(
+NelderMeadReturnType<T, dim> minimizerNelderMeadFromStartingVertex(
     T intitialDisplacement, typename simplex<T, dim>::vertex startingvertex,
     std::function<T(T *)> function) {
   using Simplex = simplex<T, dim>;
