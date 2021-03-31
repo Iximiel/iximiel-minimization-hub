@@ -1,4 +1,6 @@
-#include "simplexNelderMeadMinimizator.h"
+#include "simplexNelderMeadMinimizator.hpp"
+#include "mhtestfunctions.hpp"
+
 #include <iostream>
 
 template <typename T, int N>
@@ -21,17 +23,7 @@ void exampleSolverFromStarting (std::string title, std::function<T(T *)> functio
 }
 
 int main(int, char **) {
-  auto Rosenbrock = [](double *x) -> double {
-    return 1.0 * (x[0] - 1) * (x[0] - 1) +
-           100.0 * (x[1] - x[0] * x[0]) * (x[1] - x[0] * x[0]);
-  };
-  auto Himmelblau = [](double *x) -> double {
-    double a = (x[0] * x[0] + x[1] - 11);
-    double b = (x[0] + x[1] * x[1] - 7);
-    return a * a + b * b;
-  };
-
-  exampleSolverFromStarting<double,2> ("Rosenbrock",Rosenbrock);
-  exampleSolverFromStarting<double,2> ("Himmelblau",Himmelblau);
+    exampleSolverFromStarting<double,2> ("Rosenbrock", MHTestFunctions::Rosenbrock);
+    exampleSolverFromStarting<double,2> ("Himmelblau", MHTestFunctions::Himmelblau);
   return 0;
 }

@@ -100,13 +100,11 @@ struct simplex {
 
   void orderVertices() { std::sort(vertices_.begin(), vertices_.end()); }
 
-  vertex extrapolateOnTheWorst(const T &factor,
+  vertex newVertexFromWorstAndCentroid(const T &factor,
                                std::function<T(T *)> function) const {
     vertex newTry;
-    T f1 = (1 - factor) / N;
-    T f2 = f1 - factor;
     for (unsigned i = 0; i < N + 1; ++i) {
-      newTry[i] = centroid_[i] * f1 - vertices_[N][i] * f2;
+        newTry[i] = (centroid_[i] - vertices_[N][i]) * factor + centroid_[i];
     }
     newTry.evaluation(function);
     return newTry;
@@ -141,11 +139,11 @@ minimizerNelderMead(simplex<T, dim> s, std::function<T(T *)> function) {
       break;
     }
     // reflection
-    Vertex reflection = s.extrapolateOnTheWorst(-1.0, function);
+    Vertex reflection = s.newVertexFromWorstAndCentroid(1.0, function);
     ++functionEvaluations;
     if (reflection < s[0]) { // expand if is a good move
       s[dim] = reflection;
-      Vertex expansion = s.extrapolateOnTheWorst(2.0, function);
+      Vertex expansion = s.newVertexFromWorstAndCentroid(-2.0, function);
       ++functionEvaluations;
       if (expansion < reflection) {
         s[dim] = expansion;
@@ -153,7 +151,7 @@ minimizerNelderMead(simplex<T, dim> s, std::function<T(T *)> function) {
     } else if (reflection < s[dim - 1]) { // reflection
       s[dim] = reflection;
     } else { // contraction or if contraction fails shrink
-      Vertex contraction = s.extrapolateOnTheWorst(0.5, function);
+      Vertex contraction = s.newVertexFromWorstAndCentroid(-0.5, function);
       ++functionEvaluations;
       if (contraction < s[dim]) { // contraction
         s[dim] = contraction;
