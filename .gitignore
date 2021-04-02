@@ -1,5 +1,8 @@
-# This file is used to ignore files which are generated
+# This file is used to ignore files which are generated this is a merged ingor from a qtcreator generated and a githHub generated one
 # ----------------------------------------------------------------------------
+
+#CMake
+CMakeLists.txt.user
 
 *~
 *.autosave
@@ -70,4 +73,37 @@ Thumbs.db
 # --------
 *.dll
 *.exe
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
 
