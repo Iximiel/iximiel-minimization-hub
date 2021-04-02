@@ -5,8 +5,7 @@
 #include <functional>
 #include <iostream>
 
-namespace simplexNelderMeadMethodMinimization {
-constexpr unsigned maxFunctionEvaluations = 5000;
+namespace MHMethods {
 
 template <typename T, unsigned N> struct simplex {
   struct vertex {
@@ -118,15 +117,15 @@ protected:
   std::array<T, N> centroid_;
 };
 
-template <typename T, unsigned dim>
-struct NelderMeadReturnType {
+template <typename T, unsigned dim> struct NelderMeadReturnType {
   typename simplex<T, dim>::vertex bestVertex;
   unsigned functionEvaluations;
 };
 
 template <typename T, unsigned dim>
 NelderMeadReturnType<T, dim>
-minimizerNelderMead(simplex<T, dim> s, std::function<T(T *)> function) {
+minimizerNelderMead(simplex<T, dim> s, const unsigned maxFunctionEvaluations,
+                    std::function<T(T *)> function) {
   constexpr T notDen0 = 1e-10;
 
   using Vertex = typename simplex<T, dim>::vertex;
@@ -174,20 +173,20 @@ minimizerNelderMead(simplex<T, dim> s, std::function<T(T *)> function) {
   }
   // std::cout << functionEvaluations << " / " << maxFunctionEvaluations <<
   // std::endl;
-  return {s[0],functionEvaluations};
+  return {s[0], functionEvaluations};
 }
 
 template <typename T, unsigned dim>
 NelderMeadReturnType<T, dim> minimizerNelderMeadFromStartingVertex(
     T intitialDisplacement, typename simplex<T, dim>::vertex startingvertex,
-    std::function<T(T *)> function) {
+    const unsigned maxFunctionEvaluations, std::function<T(T *)> function) {
   using Simplex = simplex<T, dim>;
 
   Simplex s(intitialDisplacement, startingvertex);
   for (unsigned i = 0; i < dim + 1; ++i) {
     s[i].evaluation(function);
   }
-  return minimizerNelderMead(s, function);
+  return minimizerNelderMead(s, maxFunctionEvaluations, function);
 }
-} // namespace simplexNelderMeadMethodMinimization
+} // namespace MHMethods
 #endif // SIMPLEXMINIMIZATOR_H
