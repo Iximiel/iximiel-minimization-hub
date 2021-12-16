@@ -13,49 +13,95 @@ using std::endl;
 namespace MHMethods {
   // Quasi-newtown linesearch, following Numerical recipes
   template <typename T, unsigned dim>
-  void linesearch (
-      std::array<T, dim> initialPosition, std::array<T, dim> direction,
-      const T maxStepLenght,
-      std::function<MHUtilities::derivativeAndValue<T, dim> (T *)> function) {
+  std::array<T, dim> linesearch (std::array<T, dim> initialPosition, T fold,
+                                 std::array<T, dim> derivative,
+                                 const T maxStepLenght,
+                                 std::function<T (T *)> function) {
     using myArray = std::array<T, dim>;
-    MHUtilities::derivativeAndValue<T, dim> fval =
-        function (initialPosition.data ());
     constexpr T Alpha = 1e-4;
     constexpr T xTol = std::numeric_limits<T>::epsilon ();
+    myArray direction = [] (const myArray &x, const myArray &g) {
+      myArray t;
+      for (unsigned i = 0; i < dim; ++i) {
+        t[i] = x[i] - g[i];
+      }
+      return t;
+    }(initialPosition, derivative);
+
     /// TODO: the accumulation of the sum can be done in the very same loop of
     /// the slope calculation
-    T sum = sqrt (std::inner_product (direction.begin (), direction.end (),
-                                      direction.begin (), T (0.0)));
-    cout << sum << endl;
-    if (sum > maxStepLenght) {
-      sum = maxStepLenght / sum;
-      std::transform (direction.begin (), direction.end (), direction.begin (),
-                      [=] (T i) { return i * sum; });
+    {
+      T sum = sqrt (std::inner_product (direction.begin (), direction.end (),
+                                        direction.begin (), T (0.0)));
+      cout << sum << endl;
+      if (sum > maxStepLenght) {
+        sum = maxStepLenght / sum;
+        std::transform (direction.begin (), direction.end (),
+                        direction.begin (), [=] (T i) { return i * sum; });
+      }
     }
     /// TODO: the accumulation of the sum can be done in the very same loop of
     /// the slope calculation
     T slope = std::inner_product (direction.begin (), direction.end (),
-                                  fval.derivative.begin (), T (0.0));
+                                  derivative.begin (), T (0.0));
     cout << slope << endl;
     if (slope >= 0.0) {
       throw "Roundoff problem in linesearch: slope is not negative";
     }
-    /*{
-      myArray temp;
-      T slope = std::inner_product (direction.begin (), direction.end (),
-                                    initialPosition.begin (), T (0.0), ());
-      template <class InputIterator1, class InputIterator2, class T>
-      T inner_product (InputIterator1 first1, InputIterator1 last1,
-                       InputIterator2 first2, T init) {
-        while (first1 != last1) {
-          init = init + (*first1) * (*first2);
-          // or: init = binary_op1 (init, binary_op2(*first1,*first2));
-          ++first1;
-          ++first2;
-        }
-        return init;
+
+    T lambdaMIN =
+        xTol /
+        std::inner_product (
+            direction.begin (), direction.end (), initialPosition.begin (),
+            T (0.0),
+            [] (T init, T result) { return init > result ? init : result; },
+            [] (T dir, T xold) {
+              return std::abs (dir / (std::abs (xold) > 1.0 ? xold : 1.0));
+            });
+    T lambda = 1.0;
+    T tmpLambda, rhs1, rhs2, lambdaPrec, fPrec, a, b, disc;
+    myArray xnew;
+    for (;;) {
+      for (unsigned i = 0; i < dim; ++i) {
+        xnew[i] = initialPosition[i] + lambda * direction[i];
       }
-    }*/
+      T f = function (xnew.data ());
+      if (lambda < lambdaMIN) {
+        // this should throw or something
+        return initialPosition;
+      } else if (f <= (fold + Alpha * lambda * slope)) {
+        return xnew;
+      } else {
+        if (lambda == 1.0) {
+          tmpLambda = -slope / (2.0 * (f - fold - slope));
+        } else {
+          rhs1 = f - fold - lambda * slope;
+          rhs2 = fPrec - fold - lambdaPrec * slope;
+          a = (rhs1 / (lambda * lambda) - rhs2 / (lambdaPrec * lambdaPrec)) /
+              (lambda - lambdaPrec);
+          b = (lambda * rhs2 / (lambdaPrec * lambdaPrec) -
+               lambdaPrec * rhs1 / (lambda * lambda)) /
+              (lambda - lambdaPrec);
+          if (a == 0.0) {
+            tmpLambda = -slope / (2.0 * b);
+          } else {
+            disc = b * b - 3.0 * a * slope;
+            if (disc < 0.0) {
+              tmpLambda = 0.5 * lambda;
+            } else if (b <= 0.0) {
+              tmpLambda = (sqrt (disc) - b) / (3.0 * a);
+            } else
+              tmpLambda = -slope / (b + sqrt (disc));
+          }
+          if (tmpLambda > 0.5 * lambda) {
+            tmpLambda = 0.5 * lambda;
+          }
+        } // not first step
+      }
+      lambdaPrec = lambda;
+      fPrec = f;
+      lambda = std::max (tmpLambda, 0.1 * lambda);
+    }
   }
 } // namespace MHMethods
-#endif // MHLINESEARCH_H
+#endif // MHLINESEARCH_H1
