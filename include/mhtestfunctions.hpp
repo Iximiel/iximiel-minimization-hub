@@ -3,7 +3,11 @@
 #include <array>
 namespace MHTestFunctions {
   double Rosenbrock (double *x);
-  double Himmelblau (double *x);
   std::array<double, 2> RosenbrockDerivative (double *x);
+
+  double Himmelblau (double *x);
+
+  double Parabola2D (double *x);
+  std::array<double, 2> Parabola2DDerivative (double *x);
 } // namespace MHTestFunctions
 #endif // MHTESTFUNCTIONS_H

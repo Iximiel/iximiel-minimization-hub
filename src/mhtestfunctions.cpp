@@ -9,8 +9,6 @@ namespace MHTestFunctions {
   }
 
   std::array<double, 2> RosenbrockDerivative (double *x) {
-    // minimum @ (1,1)
-
     return {2.0 * (200.0 * x[0] * x[0] * x[0] - 200.0 * x[0] * x[1] + x[0] - 1),
             200.0 * (x[1] - x[0] * x[0])};
   }
@@ -24,6 +22,14 @@ namespace MHTestFunctions {
     double a = (x[0] * x[0] + x[1] - 11);
     double b = (x[0] + x[1] * x[1] - 7);
     return a * a + b * b;
+  }
+
+  double Parabola2D (double *x) {
+    // minimum @ (0,0)
+    return x[0] * x[0] + x[1] * x[1];
+  }
+  std::array<double, 2> Parabola2DDerivative (double *x) {
+    return {2.0 * x[0], 2.0 * x[1]};
   }
 
 } // namespace MHTestFunctions
