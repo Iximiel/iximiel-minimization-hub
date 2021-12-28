@@ -34,7 +34,7 @@ namespace MHMethods {
     {
       T sum = sqrt (std::inner_product (direction.begin (), direction.end (),
                                         direction.begin (), T (0.0)));
-      cout << sum << endl;
+      // cout << sum << endl;
       if (sum > maxStepLenght) {
         sum = maxStepLenght / sum;
         std::transform (direction.begin (), direction.end (),
@@ -45,7 +45,7 @@ namespace MHMethods {
     /// the slope calculation
     T slope = std::inner_product (direction.begin (), direction.end (),
                                   derivative.begin (), T (0.0));
-    cout << slope << endl;
+    // cout << slope << endl;
     if (slope >= 0.0) {
       throw "Roundoff problem in linesearchBacktracking: slope is not negative";
     }
