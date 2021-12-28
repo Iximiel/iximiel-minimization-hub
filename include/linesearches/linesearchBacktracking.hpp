@@ -11,12 +11,13 @@
 using std::cout;
 using std::endl;
 namespace MHMethods {
-  // Quasi-newtown linesearch, following Numerical recipes
+  // Quasi-newtown linesearchBacktracking, following Numerical recipes
   template <typename T, unsigned dim>
-  std::array<T, dim> linesearch (std::array<T, dim> initialPosition, T fold,
-                                 std::array<T, dim> derivative,
-                                 const T maxStepLenght,
-                                 std::function<T (T *)> function) {
+  std::array<T, dim>
+  linesearchBacktracking (std::array<T, dim> initialPosition, const T fStart,
+                          const std::array<T, dim> &derivative,
+                          const T maxStepLenght,
+                          std::function<T (T *)> function) {
     using myArray = std::array<T, dim>;
     constexpr T Alpha = 1e-4;
     constexpr T xTol = std::numeric_limits<T>::epsilon ();
@@ -46,7 +47,7 @@ namespace MHMethods {
                                   derivative.begin (), T (0.0));
     cout << slope << endl;
     if (slope >= 0.0) {
-      throw "Roundoff problem in linesearch: slope is not negative";
+      throw "Roundoff problem in linesearchBacktracking: slope is not negative";
     }
 
     T lambdaMIN =
@@ -68,15 +69,16 @@ namespace MHMethods {
       T f = function (xnew.data ());
       if (lambda < lambdaMIN) {
         // this should throw or something
-        return initialPosition;
-      } else if (f <= (fold + Alpha * lambda * slope)) {
+        swap (initialPosition, xnew);
+        return xnew;
+      } else if (f <= (fStart + Alpha * lambda * slope)) {
         return xnew;
       } else {
         if (lambda == 1.0) {
-          tmpLambda = -slope / (2.0 * (f - fold - slope));
+          tmpLambda = -slope / (2.0 * (f - fStart - slope));
         } else {
-          rhs1 = f - fold - lambda * slope;
-          rhs2 = fPrec - fold - lambdaPrec * slope;
+          rhs1 = f - fStart - lambda * slope;
+          rhs2 = fPrec - fStart - lambdaPrec * slope;
           a = (rhs1 / (lambda * lambda) - rhs2 / (lambdaPrec * lambdaPrec)) /
               (lambda - lambdaPrec);
           b = (lambda * rhs2 / (lambdaPrec * lambdaPrec) -

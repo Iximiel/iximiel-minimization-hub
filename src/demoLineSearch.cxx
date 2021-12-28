@@ -1,4 +1,4 @@
-#include "linesearches/linesearch.hpp"
+#include "linesearches/linesearchBacktracking.hpp"
 #include "mhtestfunctions.hpp"
 #include "mhutilities.hpp"
 #include <iostream>
@@ -15,7 +15,7 @@ int main (int, char **) {
   std::array<double, dim> derivative =
       MHTestFunctions::RosenbrockDerivative (x.data ());
   cout << "Init:" << MHTestFunctions::Rosenbrock (x.data ()) << endl;
-  auto t = MHMethods::linesearch<double, dim> (
+  auto t = MHMethods::linesearchBacktracking<double, dim> (
       x, MHTestFunctions::Rosenbrock (x.data ()), derivative, 1.0,
       MHTestFunctions::Rosenbrock);
   cout << "res:" << MHTestFunctions::Rosenbrock (t.data ()) << endl;
