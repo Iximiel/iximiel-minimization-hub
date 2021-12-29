@@ -72,5 +72,9 @@ int main (int, char **) {
   test<double, 2> ("Parabola", MHTestFunctions::Parabola2D,
                    MHTestFunctions::Parabola2DDerivative, {0.1, 0.1});
 
+  constexpr unsigned spheredim = 8;
+  test<double, spheredim> ("Sphere8D", MHTestFunctions::Sphere<spheredim>,
+                           MHTestFunctions::SphereDerivative<spheredim>,
+                           {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0});
   return 0;
 }
