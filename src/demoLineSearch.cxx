@@ -27,14 +27,14 @@ private:
 template <typename T> unsigned counter<T>::count = 0;
 
 template <typename T, unsigned dim>
-void test (std::string name, std::function<T (T *x)> func,
-           std::function<std::array<T, dim> (T *x)> dev,
-           std::array<double, dim> x = {1, 1}) {
+std::array<T, dim> test (std::string name, std::function<T (T *x)> func,
+                         std::function<std::array<T, dim> (T *x)> dev,
+                         std::array<double, dim> x = {1, 1}) {
   std::cout << name << " {";
   for (unsigned i = 0; i < dim; ++i) {
     std::cout << ((i == 0) ? "" : ", ") << x[i];
   }
-  std::cout << "}:\n";
+  std::cout << "}. ";
   counter<T>::count = 0;
   counter<T> funcCounter{func};
   std::array<T, dim> derivative = dev (x.data ());
@@ -42,20 +42,32 @@ void test (std::string name, std::function<T (T *x)> func,
   cout << "Initial value:" << init << endl;
   auto t = MHMethods::linesearchBacktracking<double, dim> (x, init, derivative,
                                                            1.0, funcCounter);
-  std::cout << "count:" << counter<double>::count << "\n";
-  cout << "res:" << func (t.data ()) << endl;
-  for (size_t i = 0; i < dim; i++) {
-    cout << x[i] << " -> " << t[i] << endl;
+  std::cout << "->{";
+  for (unsigned i = 0; i < dim; ++i) {
+    std::cout << ((i == 0) ? "" : ", ") << t[i];
   }
+  std::cout << "}. Res : " << func (t.data ()) << " in "
+            << counter<double>::count << " steps." << endl
+            << endl;
+  return t;
 }
 
 int main (int, char **) {
 
   test<double, 2> ("Rosenbrock", MHTestFunctions::Rosenbrock,
-                   MHTestFunctions::RosenbrockDerivative, {5, 5});
+                   MHTestFunctions::RosenbrockDerivative, {5.0, 5.0});
+  {
+    std::array<double, 2> t{3.5, -2.0};
+    for (int i = 0; i < 4; ++i) {
+      t = test<double, 2> ("Himmelblau", MHTestFunctions::Himmelblau,
+                           MHTestFunctions::HimmelblauDerivative, t);
+    }
+  }
+  test<double, 2> ("Parabola", MHTestFunctions::Parabola2D,
+                   MHTestFunctions::Parabola2DDerivative, {1.0, 1.0});
 
   test<double, 2> ("Parabola", MHTestFunctions::Parabola2D,
-                   MHTestFunctions::Parabola2DDerivative, {1, 1});
+                   MHTestFunctions::Parabola2DDerivative, {2.0, 0.0});
 
   test<double, 2> ("Parabola", MHTestFunctions::Parabola2D,
                    MHTestFunctions::Parabola2DDerivative, {0.1, 0.1});

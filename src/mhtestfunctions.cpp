@@ -24,6 +24,12 @@ namespace MHTestFunctions {
     return a * a + b * b;
   }
 
+  std::array<double, 2> HimmelblauDerivative (double *x) {
+    double a = (x[0] * x[0] + x[1] - 11);
+    double b = (x[0] + x[1] * x[1] - 7);
+    return {2.0 * (2.0 * x[0] * a + b), 2.0 * (a + 2 * x[1] * b)};
+  }
+
   double Parabola2D (double *x) {
     // minimum @ (0,0)
     return x[0] * x[0] + x[1] * x[1];
