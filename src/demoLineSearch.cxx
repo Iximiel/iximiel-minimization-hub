@@ -52,6 +52,32 @@ std::array<T, dim> test (std::string name, std::function<T (T *x)> func,
   return t;
 }
 
+template <typename T, int Nat> void exampleSolverForLJ (std::string title) {
+  constexpr unsigned N = 3 * Nat;
+  std::array<T, N> initialPosition;
+  for (int i = 0; i < Nat; ++i) {
+    initialPosition[i * 3] = i;
+    initialPosition[i * 3 + 1] = i;
+    initialPosition[i * 3 + 2] = i;
+  }
+  counter<T>::count = 0;
+  counter<T> funcCounter{MHTestFunctions::LennardJones12_6<Nat>};
+  T init = funcCounter (initialPosition.data ());
+  auto derivative = MHTestFunctions::LennardJones12_6Derivative<Nat> (
+      initialPosition.data ());
+  auto t = MHMethods::linesearchBacktracking<double, N> (
+      initialPosition, init, derivative, 1.0, funcCounter);
+  std::cout << "Res : " << MHTestFunctions::LennardJones12_6<Nat> (t.data ())
+            << " in " << counter<double>::count << " steps." << endl
+            << endl;
+
+  for (int i = 0; i < N; i += 3) {
+    std::cout << i / 3 << ": " << t[i] << " " << t[i + 1] << " " << t[i + 2]
+              << '\n';
+  }
+  std::cout << std::flush;
+}
+
 int main (int, char **) {
 
   test<double, 2> ("Rosenbrock", MHTestFunctions::Rosenbrock,
@@ -76,5 +102,9 @@ int main (int, char **) {
   test<double, spheredim> ("Sphere8D", MHTestFunctions::Sphere<spheredim>,
                            MHTestFunctions::SphereDerivative<spheredim>,
                            {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0});
+
+  exampleSolverForLJ<double, 3> ("LJ 3 atoms");
+  exampleSolverForLJ<double, 6> ("LJ 6 atoms");
+  exampleSolverForLJ<double, 9> ("LJ 9 atoms");
   return 0;
 }
