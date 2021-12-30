@@ -11,6 +11,17 @@
 using std::cout;
 using std::endl;
 namespace MHMethods {
+
+  template <typename Iterator0, typename Iterator1, typename Iterator2,
+            typename T>
+  inline void multipyByFactorAndSum (Iterator0 x0, Iterator0 x0End,
+                                     Iterator1 direction, Iterator2 result,
+                                     const T lambda) {
+
+    for (; x0 != x0End; ++x0, (void)++direction, (void)++result)
+      *result = *x0 + lambda * (*direction);
+  }
+
   // Quasi-newtown linesearchBacktracking, following Numerical recipes
   template <typename T, unsigned dim>
   std::array<T, dim>
@@ -60,13 +71,17 @@ namespace MHMethods {
               return std::abs (dir / (std::abs (xold) > 1.0 ? xold : 1.0));
             });
     T lambda = 1.0;
-    T tmpLambda, rhs1, rhs2, lambdaPrec, fPrec, a, b, disc;
+    T tmpLambda, rhs, rhsPrec, lambdaPrec, fPrec, a, b, disc, f;
     myArray xnew;
-    for (;;) {
-      for (unsigned i = 0; i < dim; ++i) {
+#define USENEW
+#ifdef USENEW
+    { // first step
+      multipyByFactorAndSum (initialPosition.begin (), initialPosition.end (),
+                             direction.begin (), xnew.begin (), lambda);
+      /*for (unsigned i = 0; i < dim; ++i) {
         xnew[i] = initialPosition[i] + lambda * direction[i];
-      }
-      T f = function (xnew.data ());
+      }*/
+      f = function (xnew.data ());
       if (lambda < lambdaMIN) {
         // this should throw or something
         swap (initialPosition, xnew);
@@ -74,36 +89,99 @@ namespace MHMethods {
       } else if (f <= (fStart + Alpha * lambda * slope)) {
         return xnew;
       } else {
-        if (lambda == 1.0) {
-          tmpLambda = -slope / (2.0 * (f - fStart - slope));
-        } else {
-          rhs1 = f - fStart - lambda * slope;
-          rhs2 = fPrec - fStart - lambdaPrec * slope;
-          a = (rhs1 / (lambda * lambda) - rhs2 / (lambdaPrec * lambdaPrec)) /
-              (lambda - lambdaPrec);
-          b = (lambda * rhs2 / (lambdaPrec * lambdaPrec) -
-               lambdaPrec * rhs1 / (lambda * lambda)) /
-              (lambda - lambdaPrec);
-          if (a == 0.0) {
-            tmpLambda = -slope / (2.0 * b);
-          } else {
-            disc = b * b - 3.0 * a * slope;
-            if (disc < 0.0) {
-              tmpLambda = 0.5 * lambda;
-            } else if (b <= 0.0) {
-              tmpLambda = (sqrt (disc) - b) / (3.0 * a);
-            } else
-              tmpLambda = -slope / (b + sqrt (disc));
-          }
-          if (tmpLambda > 0.5 * lambda) {
-            tmpLambda = 0.5 * lambda;
-          }
-        } // not first step
+        tmpLambda = -slope / (2.0 * (f - fStart - slope));
       }
+      rhs = f - fStart - lambda * slope;
+    }
+    for (;;) {
+      rhsPrec = rhs;
       lambdaPrec = lambda;
       fPrec = f;
       lambda = std::max (tmpLambda, 0.1 * lambda);
+
+      multipyByFactorAndSum (initialPosition.begin (), initialPosition.end (),
+                             direction.begin (), xnew.begin (), lambda);
+      /*for (unsigned i = 0; i < dim; ++i) {
+        xnew[i] = initialPosition[i] + lambda * direction[i];
+      }*/
+      f = function (xnew.data ());
+      if (lambda < lambdaMIN) {
+        // this should throw or something
+        swap (initialPosition, xnew);
+        return xnew;
+      } else if (f <= (fStart + Alpha * lambda * slope)) {
+        return xnew;
+      } else {
+        rhs = f - fStart - lambda * slope;
+        // rhsPrec = fPrec - fStart - lambdaPrec * slope;
+        a = (rhs / (lambda * lambda) - rhsPrec / (lambdaPrec * lambdaPrec)) /
+            (lambda - lambdaPrec);
+        b = (lambda * rhsPrec / (lambdaPrec * lambdaPrec) -
+             lambdaPrec * rhs / (lambda * lambda)) /
+            (lambda - lambdaPrec);
+        if (a == 0.0) {
+          tmpLambda = -slope / (2.0 * b);
+        } else {
+          disc = b * b - 3.0 * a * slope;
+          if (disc < 0.0) {
+            tmpLambda = 0.5 * lambda;
+          } else if (b <= 0.0) {
+            tmpLambda = (sqrt (disc) - b) / (3.0 * a);
+          } else
+            tmpLambda = -slope / (b + sqrt (disc));
+        }
+        if (tmpLambda > 0.5 * lambda) {
+          tmpLambda = 0.5 * lambda;
+        }
+      }
     }
+#else
+    for (;;) {
+      multipyByFactorAndSum (initialPosition.begin (), initialPosition.end (),
+                             direction.begin (), xnew.begin (), lambda);
+      // for (unsigned i = 0; i < dim; ++i) {xnew[i] = initialPosition[i] +
+      lambda *direction[i];
+    }
+    f = function (xnew.data ());
+    if (lambda < lambdaMIN) {
+      // this should throw or something
+      swap (initialPosition, xnew);
+      return xnew;
+    } else if (f <= (fStart + Alpha * lambda * slope)) {
+      return xnew;
+    } else {
+      if (lambda == 1.0) {
+        tmpLambda = -slope / (2.0 * (f - fStart - slope));
+      } else {
+        rhs = f - fStart - lambda * slope;
+        rhsPrec = fPrec - fStart - lambdaPrec * slope;
+        a = (rhs / (lambda * lambda) - rhsPrec / (lambdaPrec * lambdaPrec)) /
+            (lambda - lambdaPrec);
+        b = (lambda * rhsPrec / (lambdaPrec * lambdaPrec) -
+             lambdaPrec * rhs / (lambda * lambda)) /
+            (lambda - lambdaPrec);
+        if (a == 0.0) {
+          tmpLambda = -slope / (2.0 * b);
+        } else {
+          disc = b * b - 3.0 * a * slope;
+          if (disc < 0.0) {
+            tmpLambda = 0.5 * lambda;
+          } else if (b <= 0.0) {
+            tmpLambda = (sqrt (disc) - b) / (3.0 * a);
+          } else
+            tmpLambda = -slope / (b + sqrt (disc));
+        }
+        if (tmpLambda > 0.5 * lambda) {
+          tmpLambda = 0.5 * lambda;
+        }
+      } // not first step
+    }
+    // rhsPrec=rhs;
+    lambdaPrec = lambda;
+    fPrec = f;
+    lambda = std::max (tmpLambda, 0.1 * lambda);
   }
+#endif
+  } // namespace MHMethods
 } // namespace MHMethods
 #endif // MHLINESEARCH_H1
